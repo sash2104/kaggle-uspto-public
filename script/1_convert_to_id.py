@@ -4,23 +4,8 @@ import polars as pl
 import glob
 from collections import Counter
 from tqdm import tqdm
-from multiprocessing import Pool, Manager
-import whoosh
-import whoosh.analysis
 import os
 import re
-
-BRS_STOPWORDS = ['an', 'are', 'by', 'for', 'if', 'into', 'is', 'no', 'not', 'of', 'on', 'such',
-    'that', 'the', 'their', 'then', 'there', 'these', 'they', 'this', 'to', 'was', 'will']
-NUMBER_REGEX = re.compile(r'^(\d+|\d{1,3}(,\d{3})*)(\.\d+)?$')
-
-class NumberFilter(whoosh.analysis.Filter):
-    def __call__(self, tokens):
-        for t in tokens:
-            if not NUMBER_REGEX.match(t.text):
-                yield t
-
-analyzer = whoosh.analysis.StandardAnalyzer(stoplist=BRS_STOPWORDS) | NumberFilter()
 
 def set_variables_from_file(setting_file):
     with open(setting_file, 'r') as file:
@@ -35,63 +20,148 @@ def set_variables_from_file(setting_file):
     print(f"{OUTDIR=}")
     print(f"{TESTFILE=}")
 
-def calc_vocab(key: str):
-    def process_file(file):
-        df = pl.scan_parquet(file)
-        df = df.select([key]).collect()
-        df = (df.select(words=df[key].map_elements(lambda x: list(set(token.text for token in analyzer(x))), return_dtype=pl.List(pl.Utf8)).cast(pl.List(pl.Utf8)))
-            .explode("words")
-            .to_series()
-            .value_counts()
-            .filter(pl.col("words").str.len_bytes() > 0) 
-            )
-        os.makedirs(f"{DATADIR}/temporary/vocab_{key}", exist_ok=True)
-        filebase = file.split("/")[-1]
-        outfile = f"{DATADIR}/temporary/vocab_{key}/{filebase}.tsv"
-        df.write_csv(outfile, separator="\t", include_header=False)
+def calc_pubnums(test):
+    pubnum_list = []
+    query_pubnum_list = []
+    for row in test.iter_rows():
+        query_pubnum_list.append(row[0])
+        pubnum_list.extend(row[1:])
+    test_pubnums = pl.DataFrame({"publication_number": pubnum_list}).unique(maintain_order=True)
+    query_pubnums = pl.DataFrame({"publication_number": query_pubnum_list}).unique(maintain_order=True)
+    query_pubnums = query_pubnums.filter(~pl.col("publication_number").is_in(test_pubnums["publication_number"]))
+    potential_negative = pl.scan_parquet(f"{DATADIR}/patent_metadata.parquet").select(["publication_number"]).collect()
+    potential_negative = potential_negative.filter(~pl.col("publication_number").is_in(test_pubnums["publication_number"]))
+    potential_negative = potential_negative.filter(~pl.col("publication_number").is_in(query_pubnums["publication_number"]))
+    pubnums = pl.concat([test_pubnums, query_pubnums, potential_negative])
+    n_test = test_pubnums.shape[0]
+    n_potential_negative = potential_negative.shape[0]
+    n_all = pubnums.shape[0]
+    print(n_test, n_potential_negative, n_all)
+    print(pubnums.head())
+    return test_pubnums, pubnums
 
-    files = glob.glob(f"{DATADIR}/patent_data/*")
-    for file in tqdm(files):
-        process_file(file)
+def convert_pubnums_to_id(pubnums, save: bool):
+    pubnums_with_id = pubnums.with_row_index("id")
+    pubnum2id = {}
+    for row in pubnums_with_id.rows():
+        pubnum2id[row[1]] = row[0]
+    if save:
+        pubnums_with_id = pubnums_with_id.select(["publication_number", "id"])
+        pubnums_with_id.write_csv(f"{OUTDIR}/vocab_pubnum.tsv", separator='\t', include_header=False)
+    return pubnum2id
 
-def merge_vocab(key: str):
-    vocab = Counter()
-    files = glob.glob(f"{DATADIR}/temporary/vocab_{key}/*")
-    for file in tqdm(files):
-        with open(file) as f:
-            for line in f:
-                data = line.strip().split("\t")
-                if '*' in data[0] or '$' in data[0]:
-                    # Exclude words that contain the wildcard character
-                    continue
-                vocab[data[0]] += int(data[1])
-
-    # write
-    df_vocab = pl.DataFrame({
-        "word": list(vocab.keys()),
-        "frequency": list(vocab.values())
-    })
-
-    df_vocab = df_vocab.sort(by="frequency", descending=True)
-
-    df_vocab = df_vocab.with_columns(
-        pl.arange(0, df_vocab.height).alias("id")
+def convert_test_to_id(test, pubnum2id):
+    test_id = test.select(
+        [pl.col(col).map_elements(lambda x: pubnum2id.get(x, -1), return_dtype=pl.Int64).alias(col) for col in test.columns]
     )
+    test_id.write_csv(f"{OUTDIR}/test.tsv", separator='\t', include_header=False)
 
-    df_vocab.write_parquet(f'{MY_DATADIR}/vocab_{key}.parquet')
-    return vocab
+def convert_nshot_to_id(test_pubnums):
+    nshot = pl.read_csv(f"{MY_DATADIR}/nshot.tsv", separator="\t")
+    test_nshot = test_pubnums.join(nshot, how="inner", on="publication_number")
+    print(len(test_nshot))
+    print(test_nshot.head())
+
+    def map_pubnum_to_id(pubnum):
+        return pubnum2id.get(pubnum, None)
+
+    test_nshot = test_nshot.with_columns(
+        pl.col("publication_number").map_elements(map_pubnum_to_id, return_dtype=pl.Int32).alias("pubid")
+    )
+    test_nshot = test_nshot.select(["pubid", "tokens"])
+    test_nshot.write_csv(f"{OUTDIR}/nshot.tsv", separator="\t", include_header=False)
+
+def create_and_write_vocab(df, key, write_key=None):
+    if write_key is None:
+        write_key = key
+    words = set()
+    for row in df.select(key).iter_rows():
+        for word in row[0]:
+            words.add(word)
+    words = list(words)
+    words.sort()
+    words = pl.DataFrame({key: words})
+    words = words.with_row_index("id")
+    words = words.select([key, "id"])
+    print(len(words))
+    words.write_csv(f"{OUTDIR}/vocab_{write_key}.tsv", separator='\t', include_header=False)
+    word2id = {}
+    for row in words.rows():
+        word2id[row[0]] = row[1]
+    return word2id
+
+def write_x2y(filepath: str, x2y):
+    with open(filepath, "w") as f:
+        f.write(f"{len(x2y)}\n")
+        for y in x2y:
+            f.write(f"{len(y)}")
+            if len(y) == 0:
+                f.write("\n")
+                continue
+            ystr = " ".join(map(str, y))
+            f.write(f" {ystr}\n")
+
+def calc_y2xs(df, id_x, id_y, vocab_x, vocab_y, write_key_y):
+    y2xs = [[] for _ in range(len(vocab_y))]
+    for row in df.iter_rows():
+        x = row[id_x]
+        xid = vocab_x[x]
+        for y in row[id_y]:
+            yid = vocab_y.get(y)
+            if yid is None:
+                continue
+            y2xs[yid].append(xid)
+    file = f"{OUTDIR}/{write_key_y}2pubnum.txt"
+    write_x2y(file, y2xs)
+    print(file)
+
+def calc_x2ys(df, id_x, id_y, vocab_x, vocab_y, write_key_y):
+    x2ys = [[] for _ in range(len(vocab_x))]
+    for row in df.iter_rows():
+        x = row[id_x]
+        xid = vocab_x[x]
+        x2ys[xid] = [vocab_y[y] for y in row[id_y]]
+    file = f"{OUTDIR}/pubnum2{write_key_y}.txt"
+    write_x2y(file, x2ys)  
+    print(file)
+
+def convert_cpc_codes_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, test_only: bool):
+    df = pubnums.select("publication_number")
+    df = df.join(metadata, on="publication_number", how="left")
+    ID_PUBNUM = 0
+    ID_CPC = 1
+    print(df.head())
+    if test_only:
+        df_test = df.join(test_pubnums, on="publication_number", how="inner")
+        cpc2id = create_and_write_vocab(df_test, "cpc_codes", "cpc")
+        calc_x2ys(df_test, ID_PUBNUM, ID_CPC, test_pubnum2id, cpc2id, "cpc")
+        calc_y2xs(df, ID_PUBNUM, ID_CPC, pubnum2id, cpc2id, "cpc")
+    else:
+        cpc2id = create_and_write_vocab(df, "cpc_codes", "cpc")
+        calc_x2ys(df, ID_PUBNUM, ID_CPC, pubnum2id, cpc2id, "cpc")
+        calc_y2xs(df, ID_PUBNUM, ID_CPC, pubnum2id, cpc2id, "cpc")
 
 def main():
-    parser = argparse.ArgumentParser(description='Process a setting file path.')
+    parser = argparse.ArgumentParser(description='')
     parser.add_argument('-f', '--setting-file', type=str, required=True, help='Path to the setting file')
-    parser.add_argument('-t', '--field-type', type=str, required=True, help='title|abstract|claims|description')
+    parser.add_argument('--test-only', action='store_true', help='Save only the information related to test.csv')
+    parser.add_argument('--save-nshot', action='store_true', help='If true, convert publication number of nshot.tsv to ID and save it')
 
     args = parser.parse_args()
     set_variables_from_file(args.setting_file)
+    test_only = args.test_only
+    save_nshot = args.save_nshot
+
+    os.makedirs(f"{OUTDIR}", exist_ok=True)
     
-    field = args.field_type
-    calc_vocab(field)
-    merge_vocab(field)
+    test = pl.read_csv(TESTFILE)
+    test_pubnums, pubnums = calc_pubnums(test)
+    test_pubnum2id = convert_pubnums_to_id(test_pubnums, test_only)
+    pubnum2id = convert_pubnums_to_id(pubnums, not test_only)
+    convert_test_to_id(test, pubnum2id)
+    if save_nshot:
+        convert_nshot_to_id(test_pubnum2id)
+    convert_cpc_codes_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, test_only)
 
 if __name__ == "__main__":
     main()

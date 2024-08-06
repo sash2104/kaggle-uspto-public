@@ -38,7 +38,7 @@ def calc_words(key: str, min_freq: int, max_freq: int):
         if len(df) > 0:
             df = df.with_columns(
                 df[key].map_elements(
-                    lambda x: list(set(token.text for token in analyzer(x) if allow(token.text))),
+                    lambda x: [word for word in set(token.text for token in analyzer(x)) if allow(word)],
                     return_dtype=pl.List(pl.Utf8)).cast(pl.List(pl.Utf8)).alias(key),
             )
             os.makedirs(f"{DATADIR}/temporary/words_{key}", exist_ok=True)
