@@ -10,17 +10,9 @@ import whoosh.analysis
 import os
 import re
 
-BRS_STOPWORDS = ['an', 'are', 'by', 'for', 'if', 'into', 'is', 'no', 'not', 'of', 'on', 'such',
-    'that', 'the', 'their', 'then', 'there', 'these', 'they', 'this', 'to', 'was', 'will']
-NUMBER_REGEX = re.compile(r'^(\d+|\d{1,3}(,\d{3})*)(\.\d+)?$')
-
-class NumberFilter(whoosh.analysis.Filter):
-    def __call__(self, tokens):
-        for t in tokens:
-            if not NUMBER_REGEX.match(t.text):
-                yield t
-
-analyzer = whoosh.analysis.StandardAnalyzer(stoplist=BRS_STOPWORDS) | NumberFilter()
+# Stopwords and numbers have already been excluded in create_vocab.py, so unnecessary processing is reduced.
+# analyzer = whoosh.analysis.StandardAnalyzer(stoplist=BRS_STOPWORDS) | NumberFilter()
+analyzer = whoosh.analysis.StandardAnalyzer(stoplist=None)
 
 def set_variables_from_file(setting_file):
     with open(setting_file, 'r') as file:
@@ -38,13 +30,15 @@ def set_variables_from_file(setting_file):
 def calc_words(key: str, min_freq: int, max_freq: int):
     vocab = pl.read_parquet(f"{MY_DATADIR}/vocab_{key}.parquet")
     allowwords = set(vocab.filter((pl.col("frequency") >= min_freq) & (pl.col("frequency") <= max_freq))["word"].to_list())
+    def allow(word):
+        return (len(word) >= 2) and word in allowwords
     def process_file(file):
         df = pl.scan_parquet(file)
         df = df.select(["publication_number", key]).collect()
         if len(df) > 0:
             df = df.with_columns(
                 df[key].map_elements(
-                    lambda x: list(set(token.text for token in analyzer(x) if (token.text in allowwords))),
+                    lambda x: list(set(token.text for token in analyzer(x) if allow(token.text))),
                     return_dtype=pl.List(pl.Utf8)).cast(pl.List(pl.Utf8)).alias(key),
             )
             os.makedirs(f"{DATADIR}/temporary/words_{key}", exist_ok=True)
@@ -53,7 +47,7 @@ def calc_words(key: str, min_freq: int, max_freq: int):
             df.write_parquet(outfile)
 
     files = glob.glob(f"{DATADIR}/patent_data/*")
-    Parallel(n_jobs=6)(delayed(process_file)(file) for file in tqdm(files))
+    Parallel(n_jobs=4)(delayed(process_file)(file) for file in tqdm(files))
 
 def merge(key: str, max_freq: int):
     df = pl.read_parquet(glob.glob(f"{DATADIR}/temporary/words_{key}/*.parquet"))
