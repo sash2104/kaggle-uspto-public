@@ -82,7 +82,7 @@ def set_variables_from_file(setting_file):
     print(f"{TESTFILE=}")
 
 def main():
-    parser = argparse.ArgumentParser(description='Process a setting file path.')
+    parser = argparse.ArgumentParser(description='')
     parser.add_argument('-f', '--setting-file', type=str, required=True, help='Path to the setting file')
     parser.add_argument('-t', '--field-type', type=str, required=True, help='title|abstract|claims|description')
 

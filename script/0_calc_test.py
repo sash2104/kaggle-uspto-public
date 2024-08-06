@@ -26,7 +26,7 @@ def calc_testfile(seed: int = 1):
     nn_for_test.write_csv(f"{MY_DATADIR}/test.csv")
 
 def main():
-    parser = argparse.ArgumentParser(description='Process a setting file path.')
+    parser = argparse.ArgumentParser(description='')
     parser.add_argument('-f', '--setting-file', type=str, required=True, help='Path to the setting file')
 
     args = parser.parse_args()

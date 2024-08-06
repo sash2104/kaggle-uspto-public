@@ -4,7 +4,7 @@ import polars as pl
 import glob
 from collections import Counter
 from tqdm import tqdm
-from multiprocessing import Pool, Manager
+from joblib import Parallel, delayed
 import whoosh
 import whoosh.analysis
 import os
@@ -35,63 +35,44 @@ def set_variables_from_file(setting_file):
     print(f"{OUTDIR=}")
     print(f"{TESTFILE=}")
 
-def calc_vocab(key: str):
+def calc_words(key: str, min_freq: int, max_freq: int):
+    vocab = pl.read_parquet(f"{MY_DATADIR}/vocab_{key}.parquet")
+    allowwords = set(vocab.filter((pl.col("frequency") >= min_freq) & (pl.col("frequency") <= max_freq))["word"].to_list())
     def process_file(file):
         df = pl.scan_parquet(file)
-        df = df.select([key]).collect()
-        df = (df.select(words=df[key].map_elements(lambda x: list(set(token.text for token in analyzer(x))), return_dtype=pl.List(pl.Utf8)).cast(pl.List(pl.Utf8)))
-            .explode("words")
-            .to_series()
-            .value_counts()
-            .filter(pl.col("words").str.len_bytes() > 0) 
+        df = df.select(["publication_number", key]).collect()
+        if len(df) > 0:
+            df = df.with_columns(
+                df[key].map_elements(
+                    lambda x: list(set(token.text for token in analyzer(x) if (token.text in allowwords))),
+                    return_dtype=pl.List(pl.Utf8)).cast(pl.List(pl.Utf8)).alias(key),
             )
-        os.makedirs(f"{DATADIR}/temporary/vocab_{key}", exist_ok=True)
-        filebase = file.split("/")[-1]
-        outfile = f"{DATADIR}/temporary/vocab_{key}/{filebase}.tsv"
-        df.write_csv(outfile, separator="\t", include_header=False)
+            os.makedirs(f"{DATADIR}/temporary/words_{key}", exist_ok=True)
+            filebase = file.split("/")[-1]
+            outfile = f"{DATADIR}/temporary/words_{key}/{filebase}"
+            df.write_parquet(outfile)
 
     files = glob.glob(f"{DATADIR}/patent_data/*")
-    for file in tqdm(files):
-        process_file(file)
+    Parallel(n_jobs=6)(delayed(process_file)(file) for file in tqdm(files))
 
-def merge_vocab(key: str):
-    vocab = Counter()
-    files = glob.glob(f"{DATADIR}/temporary/vocab_{key}/*")
-    for file in tqdm(files):
-        with open(file) as f:
-            for line in f:
-                data = line.strip().split("\t")
-                if '*' in data[0] or '$' in data[0]:
-                    # Exclude words that contain the wildcard character
-                    continue
-                vocab[data[0]] += int(data[1])
-
-    # write
-    df_vocab = pl.DataFrame({
-        "word": list(vocab.keys()),
-        "frequency": list(vocab.values())
-    })
-
-    df_vocab = df_vocab.sort(by="frequency", descending=True)
-
-    df_vocab = df_vocab.with_columns(
-        pl.arange(0, df_vocab.height).alias("id")
-    )
-
-    df_vocab.write_parquet(f'{MY_DATADIR}/vocab_{key}.parquet')
-    return vocab
+def merge(key: str, max_freq: int):
+    df = pl.read_parquet(glob.glob(f"{DATADIR}/temporary/words_{key}/*.parquet"))
+    n = max_freq // 1000
+    df.write_parquet(f"{DATADIR}/me/{key}_{n}k.parquet")
 
 def main():
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('-f', '--setting-file', type=str, required=True, help='Path to the setting file')
     parser.add_argument('-t', '--field-type', type=str, required=True, help='title|abstract|claims|description')
+    parser.add_argument('-m', '--max-freq', type=int, required=True, help='The maximum frequency of the target words in calc_words')
 
     args = parser.parse_args()
     set_variables_from_file(args.setting_file)
     
     field = args.field_type
-    calc_vocab(field)
-    merge_vocab(field)
+    max_freq = args.max_freq
+    calc_words(field, 2, max_freq)
+    merge(field, max_freq)
 
 if __name__ == "__main__":
     main()

@@ -82,7 +82,7 @@ def merge_vocab(key: str):
     return vocab
 
 def main():
-    parser = argparse.ArgumentParser(description='')
+    parser = argparse.ArgumentParser(description='Process a setting file path.')
     parser.add_argument('-f', '--setting-file', type=str, required=True, help='Path to the setting file')
     parser.add_argument('-t', '--field-type', type=str, required=True, help='title|abstract|claims|description')
 

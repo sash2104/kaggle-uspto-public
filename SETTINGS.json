@@ -1,0 +1,7 @@
+{
+    "DATADIR": "/kaggle/input/uspto-explainable-ai",
+    "MY_DATADIR": "/kaggle/input/uspto2024dataset2",
+    "MY_SCRIPTDIR": "/kaggle/input/uspto2024script2",
+    "OUTDIR": "/kaggle/working",
+    "TESTFILE": "/kaggle/input/uspto-explainable-ai/test.csv"
+}
