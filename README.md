@@ -33,7 +33,7 @@ Docker Container:
 mkdir -p dataset/me
 kaggle competitions download -c uspto-explainable-ai -p dataset
 
-cd uspto-explainable-ai.zip
+cd dataset
 unzip uspto-explainable-ai.zip
 cd ..
 ```
