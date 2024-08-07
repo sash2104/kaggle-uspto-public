@@ -1,0 +1,11 @@
+.
+./.devcontainer
+./dataset
+./dataset/me
+./dataset/patent_data
+./dataset/temporary
+./dataset/train_index
+./find_twoshot
+./output
+./script
+./src

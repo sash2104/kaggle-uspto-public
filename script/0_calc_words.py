@@ -47,7 +47,7 @@ def calc_words(key: str, min_freq: int, max_freq: int):
             df.write_parquet(outfile)
 
     files = glob.glob(f"{DATADIR}/patent_data/*")
-    Parallel(n_jobs=4)(delayed(process_file)(file) for file in tqdm(files))
+    Parallel(n_jobs=3)(delayed(process_file)(file) for file in tqdm(files))
 
 def merge(key: str, max_freq: int):
     df = pl.read_parquet(glob.glob(f"{DATADIR}/temporary/words_{key}/*.parquet"))

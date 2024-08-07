@@ -1,7 +1,8 @@
 {
-    "DATADIR": "/kaggle/input/uspto-explainable-ai",
-    "MY_DATADIR": "/kaggle/input/uspto2024dataset2",
-    "MY_SCRIPTDIR": "/kaggle/input/uspto2024script2",
-    "OUTDIR": "/kaggle/working",
-    "TESTFILE": "/kaggle/input/uspto-explainable-ai/test.csv"
+    "DATADIR": "/workspaces/uspto-public/dataset",
+    "MY_DATADIR": "/workspaces/uspto-public/dataset/me",
+    "MY_SCRIPTDIR": "/workspaces/uspto-public/src",
+    "OUTDIR": "/workspaces/uspto-public/output",
+    "FIND_TWOSHOT_INDIR": "/workspaces/uspto-public/temporary/find_twoshot",
+    "TESTFILE": "/workspaces/uspto-public/dataset/me/test.csv"
 }

@@ -1,7 +1,0 @@
-{
-    "DATADIR": "/workspaces/uspto-public/dataset",
-    "MY_DATADIR": "/workspaces/uspto-public/dataset/me",
-    "MY_SCRIPTDIR": "/workspaces/uspto-public/src",
-    "OUTDIR": "/workspaces/uspto-public/output",
-    "TESTFILE": "/workspaces/uspto-public/dataset/me/test.csv"
-}
