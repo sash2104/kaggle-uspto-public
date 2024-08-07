@@ -39,30 +39,24 @@ cd ..
 ```
 
 ## Data Processing
+
 ```sh
-python script/0_calc_test.py -f SETTINGS.local.json
+# Generates the files (dataset/me/*) used in the submission notebook. It took 2-3 days in my environment.
+sh preprocess.sh
 
-# It took about 10 hours in my execution environment.
-python script/0_calc_vocab.py -f SETTINGS.local.json -t title
-python script/0_calc_vocab.py -f SETTINGS.local.json -t abstract
-python script/0_calc_vocab.py -f SETTINGS.local.json -t claims
-python script/0_calc_vocab.py -f SETTINGS.local.json -t description
-
-# It took about 10 hours in my execution environment.
-python script/0_calc_oneshot.py -f SETTINGS.local.json -t title 
-python script/0_calc_oneshot.py -f SETTINGS.local.json -t abstract
-python script/0_calc_oneshot.py -f SETTINGS.local.json -t claims
-python script/0_calc_oneshot.py -f SETTINGS.local.json -t description
-
-# It took about 10 hours in my execution environment.
-python script/0_calc_words.py -f SETTINGS.local.json -t title -m 400000
-python script/0_calc_words.py -f SETTINGS.local.json -t abstract -m 400000
-python script/0_calc_words.py -f SETTINGS.local.json -t claims -m 100000
-python script/0_calc_words.py -f SETTINGS.local.json -t description -m 10000
+# Generate files to be used with the C++ solver.
+python script/1_convert_to_id.py -f SETTINGS.json -m solver
 ```
 
 NOTE:
-- 一時ファイルを含めて、100GB程度のディスク容量が必要です。一時ファイルはすべてdataset/temporary以下に出力されるので、必要に応じて削除してください
+- Including temporary files, approximately 100GB of disk space is required. All temporary files will be output under dataset/temporary, so please delete them as needed.
+- The files corresponding to `dataset/me/*` output by `sh preprocess.sh` are uploaded to https://www.kaggle.com/datasets/sash2104/uspto2024dataset2 . Please use them as needed.
+
+## Solve
+
+```sh
+sh solve.sh
+```
 
 ## License
 

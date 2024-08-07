@@ -56,7 +56,7 @@ def convert_test_to_id(test, pubnum2id, outdir: str):
     )
     test_id.write_csv(f"{outdir}/test.tsv", separator='\t', include_header=False)
 
-def convert_nshot_to_id(test_pubnums, outdir: str):
+def convert_nshot_to_id(pubnum2id, test_pubnums, outdir: str):
     nshot = pl.read_csv(f"{MY_DATADIR}/nshot.tsv", separator="\t")
     test_nshot = test_pubnums.join(nshot, how="inner", on="publication_number")
     print(len(test_nshot))
@@ -135,12 +135,12 @@ def convert_cpc_codes_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, te
     if test_only:
         df_test = df.join(test_pubnums, on="publication_number", how="inner")
         cpc2id = create_and_write_vocab(df_test, "cpc_codes", outdir, "cpc")
-        calc_x2ys(df_test, ID_PUBNUM, ID_CPC, test_pubnum2id, cpc2id, "cpc")
-        calc_y2xs(df, ID_PUBNUM, ID_CPC, pubnum2id, cpc2id, "cpc")
+        calc_x2ys(df_test, ID_PUBNUM, ID_CPC, test_pubnum2id, cpc2id, "cpc", outdir)
+        calc_y2xs(df, ID_PUBNUM, ID_CPC, pubnum2id, cpc2id, "cpc", outdir)
     else:
         cpc2id = create_and_write_vocab(df, "cpc_codes", outdir, "cpc")
-        calc_x2ys(df, ID_PUBNUM, ID_CPC, pubnum2id, cpc2id, "cpc")
-        calc_y2xs(df, ID_PUBNUM, ID_CPC, pubnum2id, cpc2id, "cpc")
+        calc_x2ys(df, ID_PUBNUM, ID_CPC, pubnum2id, cpc2id, "cpc", outdir)
+        calc_y2xs(df, ID_PUBNUM, ID_CPC, pubnum2id, cpc2id, "cpc", outdir)
 
 def convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, field: str, max_freq: int, test_only: bool, outdir: str):
     ID_PUBNUM = 0
@@ -188,11 +188,11 @@ def main():
     pubnum2id = convert_pubnums_to_id(pubnums, not test_only, outdir)
     convert_test_to_id(test, pubnum2id, outdir)
     if save_nshot:
-        convert_nshot_to_id(test_pubnum2id, outdir)
-    convert_cpc_codes_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, test_only)
-    convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "title", 400000, test_only, outdir)
-    convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "abstract", 400000, test_only, outdir)
-    convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "claims", 100000, test_only, outdir)
+        convert_nshot_to_id(pubnum2id, test_pubnums, outdir)
+    convert_cpc_codes_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, test_only, outdir)
+    # convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "title", 400000, test_only, outdir)
+    # convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "abstract", 400000, test_only, outdir)
+    # convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "claims", 100000, test_only, outdir)
     convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "description", 10000, test_only, outdir)
 
 if __name__ == "__main__":

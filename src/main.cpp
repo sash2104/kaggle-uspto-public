@@ -250,7 +250,8 @@ vocab_t id_pubnum_;
 
 int f_ = 4;
 
-int read_x2y(const string &filepath, id_list_t &ids) {
+int read_x2y(const string &filepath, id_list_t &ids, bool update_pubnum_size) {
+  Timer timer;
   // cpc2pubnum, pubnum2cpc
   ifstream file(filepath);
   if (!file.is_open()) {
@@ -268,15 +269,17 @@ int read_x2y(const string &filepath, id_list_t &ids) {
       iss >> ids[i][j];
     }
     sort(ALL(ids[i]));
-    if (ids[i].size() > 0) {
+    if (update_pubnum_size && ids[i].size() > 0) {
       N_PUBNUM = max(N_PUBNUM, ids[i].back()+1);
     }
   }
+  D1(timer.get(), filepath);
   // D1(ids.size(), ids.back());
   return 0;
 }
 
 int read_nshot(const string &filepath, unordered_map<int, string>& vocab) {
+  Timer timer;
   ifstream file(filepath);
   if (!file.is_open()) {
     std::cerr << "Failed to open file:" << filepath << std::endl;
@@ -303,10 +306,12 @@ int read_nshot(const string &filepath, unordered_map<int, string>& vocab) {
   }
 
   file.close();
+  D1(timer.get(), filepath);
   return 0;
 }
 
 int read_vocab(const string &filepath, vocab_t& vocab) {
+  Timer timer;
   ifstream file(filepath);
   if (!file.is_open()) {
     std::cerr << "Failed to open file:" << filepath << std::endl;
@@ -323,10 +328,12 @@ int read_vocab(const string &filepath, vocab_t& vocab) {
   }
   // D1(vocab.size());
   file.close();
+  D1(timer.get(), filepath);
   return 0;
 }
 
 int read_vocab(const string &filepath, vocab_t& vocab, vocab_t& ids, vector<string> &id2key) {
+  Timer timer;
   ifstream file(filepath);
   if (!file.is_open()) {
     std::cerr << "Failed to open file:" << filepath << std::endl;
@@ -345,12 +352,14 @@ int read_vocab(const string &filepath, vocab_t& vocab, vocab_t& ids, vector<stri
   }
   // D1(id2key.front(), id2key.back());
   file.close();
+  D1(timer.get(), filepath);
   return 0;
 }
 
 vector<vector<int>> testcases_;
 
 int read_testcases(const string &filepath, vector<vector<int>> &testcases) {
+  Timer timer;
   ifstream file(filepath);
   if (!file.is_open()) {
     std::cerr << "Failed to open file:" << filepath << std::endl;
@@ -383,6 +392,7 @@ int read_testcases(const string &filepath, vector<vector<int>> &testcases) {
   file.close();
   D1(testcases.size());
   D1(LAST_TEST_ID);
+  D1(timer.get(), filepath);
   return 0;
 }
 
@@ -1197,8 +1207,8 @@ int main(int argc, char* argv[])
       string x2pubnum_file = DATADIR + field + "2pubnum.txt";
       string pubnum2x_file = DATADIR + "pubnum2" + field + ".txt";
       read_vocab(vocab_file, vocabs_[f], ids_[f], id2x_[f]);
-      read_x2y(x2pubnum_file, x2pubnums_[f]);
-      read_x2y(pubnum2x_file, pubnum2xs_[f]);
+      read_x2y(x2pubnum_file, x2pubnums_[f], true);
+      read_x2y(pubnum2x_file, pubnum2xs_[f], false);
       param_.active_fields.push_back(f);
       field_order_[f] = field_order++;
     }

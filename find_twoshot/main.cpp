@@ -47,7 +47,7 @@ map<string,int> field2x_ = {
 array<int, 5> field_order_; // Used for pruning branches in DFS (Depth-First Search).
 
 struct Param {
-  double dfs_timeout_sec = 0.01;
+  double dfs_timeout_sec = 0.001;
   bool log_level_info = false;
   int max_depth = 2;
   vector<int> active_fields;
@@ -112,7 +112,8 @@ vocab_t id_pubnum_;
 
 int f_ = 4;
 
-int read_x2y(const string &filepath, id_list_t &ids) {
+int read_x2y(const string &filepath, id_list_t &ids, bool update_pubnum_size) {
+  Timer timer;
   // cpc2pubnum, pubnum2cpc
   ifstream file(filepath);
   if (!file.is_open()) {
@@ -130,15 +131,17 @@ int read_x2y(const string &filepath, id_list_t &ids) {
       iss >> ids[i][j];
     }
     sort(ALL(ids[i]));
-    if (ids[i].size() > 0) {
+    if (update_pubnum_size && ids[i].size() > 0) {
       N_PUBNUM = max(N_PUBNUM, ids[i].back()+1);
     }
   }
+  D1(timer.get(), filepath);
   // D1(ids.size(), ids.back());
   return 0;
 }
 
 int read_vocab(const string &filepath, vocab_t& vocab) {
+  Timer timer;
   ifstream file(filepath);
   if (!file.is_open()) {
     std::cerr << "Failed to open file:" << filepath << std::endl;
@@ -155,10 +158,12 @@ int read_vocab(const string &filepath, vocab_t& vocab) {
   }
   // D1(vocab.size());
   file.close();
+  D1(timer.get(), filepath);
   return 0;
 }
 
 int read_vocab(const string &filepath, vocab_t& vocab, vocab_t& ids, vector<string> &id2key) {
+  Timer timer;
   ifstream file(filepath);
   if (!file.is_open()) {
     std::cerr << "Failed to open file:" << filepath << std::endl;
@@ -177,6 +182,7 @@ int read_vocab(const string &filepath, vocab_t& vocab, vocab_t& ids, vector<stri
   }
   // D1(id2key.front(), id2key.back());
   file.close();
+  D1(timer.get(), filepath);
   return 0;
 }
 
@@ -409,6 +415,7 @@ bool dfs_conjunctive(int pubnum, const MyVec &positive, const MyVec &all, int ma
         if (f == it.first && x <= it.second) continue;
       }
       const auto &pubnums = x2pubnums_[f][x];
+      if (pubnums.size() > 10000) continue;
       int n = intersect(positive, pubnums);
       if (n < 1) continue;
       MyVec new_positive = intersect_.to_myvec();
@@ -441,6 +448,13 @@ void find_twoshot() {
       D1(elapsed_sec, n_found, n);
     }
     int pubnum = n;
+    for (int f: param_.active_fields) {
+      sort(ALL(pubnum2xs_[f][pubnum]), [&](const auto &l, const auto &r){
+        // if (x2pubnums_[f].size() <= r) return l < r;
+        // if (x2pubnums_[f].size() <= l) return l < r;
+        return x2pubnums_[f][l].size() < x2pubnums_[f][r].size();
+      });
+    }
     vector<pair<int, int>> used;
     MyVec test_all;
     MyVec all;
@@ -498,8 +512,8 @@ int main(int argc, char* argv[])
       string x2pubnum_file = DATADIR + field + "2pubnum.txt";
       string pubnum2x_file = DATADIR + "pubnum2" + field + ".txt";
       read_vocab(vocab_file, vocabs_[f], ids_[f], id2x_[f]);
-      read_x2y(x2pubnum_file, x2pubnums_[f]);
-      read_x2y(pubnum2x_file, pubnum2xs_[f]);
+      read_x2y(x2pubnum_file, x2pubnums_[f], true);
+      read_x2y(pubnum2x_file, pubnum2xs_[f], false);
       param_.active_fields.push_back(f);
       field_order_[f] = field_order++;
     }
