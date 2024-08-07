@@ -3,6 +3,6 @@
     "MY_DATADIR": "/workspaces/uspto-public/dataset/me",
     "MY_SCRIPTDIR": "/workspaces/uspto-public/src",
     "OUTDIR": "/workspaces/uspto-public/output",
-    "FIND_TWOSHOT_INDIR": "/workspaces/uspto-public/temporary/find_twoshot",
+    "FIND_TWOSHOT_INDIR": "/workspaces/uspto-public/dataset/temporary/find_twoshot",
     "TESTFILE": "/workspaces/uspto-public/dataset/me/test.csv"
 }
