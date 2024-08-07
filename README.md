@@ -3,10 +3,10 @@ The script released has been refactored after the competition ended. Additionall
 
 - Detailed documentation
   - https://www.kaggle.com/competitions/uspto-explainable-ai/discussion/522202
-  - TODO: link
+  - [writeup/README.md](writeup/README.md)
 - Submission notebook
   - https://www.kaggle.com/code/sash2104/uspto-6th-place-solution
-  - TODO: link
+  - [uspto-6th-place-solution.ipynb](uspto-6th-place-solution.ipynb)
 
 ## Hardware
 Host:

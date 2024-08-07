@@ -433,9 +433,14 @@ bool dfs_conjunctive(int pubnum, const MyVec &positive, const MyVec &all, int ma
 
 void find_twoshot() {
   // REP(j,100000) {
-  REP(j,N_PUBNUM) {
-    Timer timer;
-    int pubnum = j;
+  Timer global_timer;
+  int n_found = 0;
+  REP(n,N_PUBNUM) {
+    if (n > 0 && n % 100000 == 0) {
+      double elapsed_sec = global_timer.get();
+      D1(elapsed_sec, n_found, n);
+    }
+    int pubnum = n;
     vector<pair<int, int>> used;
     MyVec test_all;
     MyVec all;
@@ -444,8 +449,9 @@ void find_twoshot() {
     dfs_timer_.reset();
     dfs_conjunctive(pubnum, testcase, all, param_.max_depth, used, entities);
     if (entities.size() > 0) {
+      ++n_found;
       string query = generate_query(entities);
-      cout << id2pubnum_[j] << '\t' << query << '\n';
+      cout << id2pubnum_[n] << '\t' << query << '\n';
     }
   }
 }
