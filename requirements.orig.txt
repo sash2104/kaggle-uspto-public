@@ -1,0 +1,7 @@
+kaggle
+jupyterlab
+whoosh-reloaded
+polars
+tqdm
+ipywidgets
+joblib

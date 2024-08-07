@@ -8,7 +8,7 @@ The script released has been refactored after the competition ended. Additionall
   - https://www.kaggle.com/code/sash2104/uspto-6th-place-solution
   - [uspto-6th-place-solution.ipynb](uspto-6th-place-solution.ipynb)
 
-## Hardware
+## OS/Hardware
 Host:
 - OS: macOS Sonoma 14.3.1
 - Model Name: MacBook Pro
