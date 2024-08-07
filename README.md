@@ -40,11 +40,18 @@ cd ..
 
 ## Data Processing
 
+First, place test.csv in the path specified by TESTFILE in SETTINGS.json. If you want to prepare it yourself, you can run the following script to generate an equivalent test.csv with 2500 rows.
 ```sh
-# Generates the files (dataset/me/*) used in the submission notebook. It took 2-3 days in my environment.
-sh preprocess.sh
+python script/0_calc_test.py -f SETTINGS.json
+```
 
-# Generate files to be used with the C++ solver.
+Next, generates the files (`dataset/me/*`) used in the submission notebook. It took 2-3 days in my environment.
+```sh
+sh preprocess.sh
+```
+
+Finally, generate the files to be used with the C++ solver.
+```sh
 python script/1_convert_to_id.py -f SETTINGS.json -m solver
 ```
 

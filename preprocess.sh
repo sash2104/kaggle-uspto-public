@@ -1,8 +1,5 @@
 #!/usr/bin/env sh
 
-# Used for local validation. If test.csv is already prepared, execution is not necessary.
-python script/0_calc_test.py -f SETTINGS.json
-
 # It took about 10 hours in my execution environment.
 python script/0_calc_vocab.py -f SETTINGS.json -t title
 python script/0_calc_vocab.py -f SETTINGS.json -t abstract
