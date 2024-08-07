@@ -190,9 +190,9 @@ def main():
     if save_nshot:
         convert_nshot_to_id(pubnum2id, test_pubnums, outdir)
     convert_cpc_codes_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, test_only, outdir)
-    # convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "title", 400000, test_only, outdir)
-    # convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "abstract", 400000, test_only, outdir)
-    # convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "claims", 100000, test_only, outdir)
+    convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "title", 400000, test_only, outdir)
+    convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "abstract", 400000, test_only, outdir)
+    convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "claims", 100000, test_only, outdir)
     convert_x_to_id(pubnums, test_pubnums, pubnum2id, test_pubnum2id, "description", 10000, test_only, outdir)
 
 if __name__ == "__main__":

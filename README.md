@@ -1,5 +1,5 @@
-This is the 6th Place Solution for the USPTO - Explainable AI for Patent Professionals (Kaggle competition).  
-The script released has been refactored after the competition ended. Additionally, due to processes that change randomly at each execution or are cut off by time, it is impossible to completely reproduce the submissions made during the contest. However, since the essential parts have not been changed, almost the same Private Score can be achieved.
+This is the 6th Place Solution for the [USPTO - Explainable AI for Patent Professionals](https://www.kaggle.com/competitions/uspto-explainable-ai) (Kaggle competition).  
+The script released has been refactored after the competition ended. Additionally, due to processes that change randomly at each execution or are cut off by time, it is impossible to completely reproduce the submission made during the contest. However, since the essential parts have not been changed, almost the same Private Score can be achieved.
 
 - Detailed documentation
   - https://www.kaggle.com/competitions/uspto-explainable-ai/discussion/522202
