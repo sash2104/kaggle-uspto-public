@@ -93,11 +93,11 @@ test.csvのpublication_number相当は下記で用意しました
 - n-shot subquery
   - 特定の一つの特許に確実に絞り込むためのsubquery
   - 例えば、titleに`margaric`を含むのは全特許中で`US-2023092870-A1`のみなので、`ti:margaric`は`US-2023092870-A1`のみに絞り込むことができます
-  - 同様に、cpc_codesの`A46B13/005`と`A47L7/0061`がco-occurするのは全特許中で`US-2023025335-A1`のみなので、`cpc:A46B13/005 AND cpc:A47L7/0061`は`US-2023025335-A1`のみに絞り込むことができます
+  - 同様に、cpc_codesの`A46B13/005`と`A47L7/0061`がともに出現するのは全特許中で`US-2023025335-A1`のみなので、`cpc:A46B13/005 AND cpc:A47L7/0061`は`US-2023025335-A1`のみに絞り込むことができます
   - これは事前計算で埋め込みました
     - 手元で計算した結果patent_metadata.parquetに含まれる全13.3M個の特許のうち、1tokenで一つに絞れる特許は5.9M個、2tokenで一つに絞れる特許を追加で6.7M個程度見つけることができました
 - conjunctive subquery
-  - Positiveを複数含み、Certain Negativeがなく、Potential Negativeが$l$個以下となるsubquery
+  - Positiveを複数含み、Certain Negativeがなく、Potential Negativeが $l$ 個以下となるsubquery
   - 2-3tokenを`AND`で結合したもの
     - cpc_codesすべて、titleとabstractの頻度400k以下、claimsの頻度100k以下、descriptionの頻度10k以下の語の組み合わせをDFSで探索しました
     - 大抵のケースは全探索できましたが、一部は時間がかかったので時間で打ち切っています
