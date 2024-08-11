@@ -4,6 +4,7 @@ The script released has been refactored after the competition ended. Additionall
 - Detailed documentation
   - https://www.kaggle.com/competitions/uspto-explainable-ai/discussion/522202
   - [writeup/README.md](writeup/README.md)
+  - [writeup/README_ja.md](writeup/README_ja.md) (日本語)
 - Submission notebook
   - https://www.kaggle.com/code/sash2104/uspto-6th-place-solution
   - [uspto-6th-place-solution.ipynb](uspto-6th-place-solution.ipynb)
@@ -67,7 +68,7 @@ sh solve.sh
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ### Third-Party Code
 
