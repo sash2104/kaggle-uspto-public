@@ -39,20 +39,21 @@ PositiveとNegativeが混在する場合はAP'@50を近似的にしか計算で�
 
 制限2により結果を1パターンに確定できないため、すべてのパターンが等確率に登場すると仮定しました。
 この場合のAP'@50の近似スコアは`(0.090 + 0.070)/2 = 0.080`です。
-同様に、Positive n個とNegative m個の場合、$\binom{n+m}{m}$パターンの結果がありえます。
-すべてのパターンから復元抽出でランダムに選んだ100,000パターンのAP'@50の平均値をPositive n個、Negative m個の場合のスコアとしました(以後$\text{score1}(n,m)$とします)。
+同様に、Positive n個とNegative m個の場合、 $\binom{n+m}{m}$ パターンの結果がありえます。
+すべてのパターンから復元抽出でランダムに選んだ100,000パターンのAP'@50の平均値をPositive n個、Negative m個の場合のスコアとしました(以後 $\text{score1}(n,m)$ とします)。
 
 スコアをプロットしたグラフが下記です。
 
 ![score1](uspto_score1.png)
 
-例えば$\text{score1}(25,0)=0.842$、$\text{score1}(50,50)=0.500$となります。
+例えば $\text{score1}(25,0)=0.842$ 、 $\text{score1}(50,50)=0.500$ となります。
 
-Result SetにPositiveとCertain Negativeしか含まれていない場合、$\text{score1}$ をそのまま利用できます。
+Result SetにPositiveとCertain Negativeしか含まれていない場合、 $\text{score1}$ をそのまま利用できます。
 
 Result SetにPotential Negativeが含まれる場合はNegativeの数が確率的に変化します。
 Positive n個、Potential Negative m個で、Potential Negativeはすべて確率pでResult Setに含まれるものと仮定します。
 この場合、二項分布の確率質量関数(pmf)を使い、下記のようにスコアを計算できます。
+
 $$
 \text{score2}(n, m, p) = \sum_{k=0}^{m} \binom{m}{k} p^k (1-p)^{m-k} \text{score1}(n, k) 
 $$
