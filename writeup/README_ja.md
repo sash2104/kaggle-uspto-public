@@ -60,10 +60,10 @@ $$
 
 
 例えば $\text{score2(50,50,1.0) = 0.500}$ 、 $\text{score2}(50,50,0.1)=0.910$ 、 $\text{score2}(50,50,0.01)=0.990$ となります。
-例からもわかるように、$\text{score2}(n, m, 1.0)$は$\text{score1}(n, m)$と一致します。
+例からもわかるように、 $\text{score2}(n, m, 1.0)$ は $\text{score1}(n, m)$ と一致します。
 
-validation scoreは、自前で作成したtest.csv相当の2500行それぞれで計算した$\text{score2(n, m, 0.2)}$の平均としました。
-すべての特許の数は13M程度で、test indexに含まれうるPotential Negativeの数は75,000程度なので、$p=75000/13000000 ≒ 0.006$程度にすべきに思いましたが、それだとvalidation scoreが楽観的になりすぎたので、$p=0.2$としています。
+validation scoreは、自前で作成したtest.csv相当の2500行それぞれで計算した $\text{score2(n, m, 0.2)}$ の平均としました。
+すべての特許の数は13M程度で、test indexに含まれうるPotential Negativeの数は75,000程度なので、 $p=75000/13000000 ≒ 0.006$ 程度にすべきに思いましたが、それだとvalidation scoreが楽観的になりすぎたので、 $p=0.2$ としています。
 
 test.csvのpublication_number相当は下記で用意しました
 - 1975年以降かつcpc_codesがからではない特許から一様ランダムに選んだ2500特許
@@ -77,7 +77,7 @@ test.csvのpublication_number相当は下記で用意しました
 ## 解法
 - Phase 0: 前処理
 - phase 1: subqueryの候補を求める
-- phase 2: 求めたsubqueryの候補を使い、`\text{score2}(n, m, 0.2)`が高くなるようビームサーチ
+- phase 2: 求めたsubqueryの候補を使い、 $\text{score2}(n, m, 0.2)$ が高くなるようビームサーチ
 
 自前のsearcher同様、実行速度を早くしたかったので、すべてC++で実装しました。
 
@@ -102,12 +102,12 @@ test.csvのpublication_number相当は下記で用意しました
     - cpc_codesすべて、titleとabstractの頻度400k以下、claimsの頻度100k以下、descriptionの頻度10k以下の語の組み合わせをDFSで探索しました
     - 大抵のケースは全探索できましたが、一部は時間がかかったので時間で打ち切っています
     - Certain Negativeは一つでも含まれるとスコアが大きく下がってしまうのと、後述のDFSの効率の良い枝刈りになったので含めないようにしました
-  - Potential Negativeの数$l$は、$l=0$とした場合と$l=1$とした場合の2パターンでphase 2のビームサーチを実施しています。単に$l=1$とする場合よりもvalidation scoreが0.003程度高くなりました
+  - Potential Negativeの数 $l$ は、 $l=0$ とした場合と $l=1$ とした場合の2パターンでphase 2のビームサーチを実施しています。単に $l=1$ とする場合よりもvalidation scoreが0.003程度高くなりました
   - これは事前計算せず、都度計算しています
 
 ### Phase 2: ビームサーチ
-評価指標は$\text{score2}(n, m, 0.2)$で、使用したトークン数ごとに幅$W$のビームサーチをしました。
-submission時は$W=100$にしました。$W$を増やせば多少validation scoreが向上しましたが、$W$を10倍にしてもvalidation scoreが0.001程度しか変わりませんでした。
+評価指標は $\text{score2}(n, m, 0.2)$ で、使用したトークン数ごとに幅$W$のビームサーチをしました。
+submission時は $W=100$ にしました。 $W$ を増やせば多少validation scoreが向上しましたが、 $W$ を10倍にしてもvalidation scoreが0.001程度しか変わりませんでした。
 また、subquery同士で共通のtokenが含まれる場合はまとめることで、使用するtoken数を節約しました。
 
 例えばUS-7507696-B2に対するクエリは下記です。
@@ -127,7 +127,7 @@ subqueryに分解すると4つです
 
 例示したクエリ同様に、全特許に対してtargetの50個のみにマッチする完璧なクエリを生成できた割合は6%程度ありました。
 
-private scoreが一番良かったsubmissionでの$\text{score2}$の分布は下記です。
+private scoreが一番良かったsubmissionでの $\text{score2}$ の分布は下記です。
 
 ![score2_distribution](score2_distribution.png)
 
